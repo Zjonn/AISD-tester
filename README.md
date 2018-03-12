@@ -10,6 +10,8 @@ Przy pierwszym starcie należy podać scieżkę do:
 - skompilowanego programu 
 - folderu zawierającego testy
 
+### Gdzie znajdę testy?
+ `https://github.com/mbronek7/AISD2018-TESTY`
 ### Jak określam czy program zaliczył test?
 Porównuję wynik zwrócony przez program z oczekiwaną odpowiedzią.
 **Ignoruję znaki nowej lini.**
