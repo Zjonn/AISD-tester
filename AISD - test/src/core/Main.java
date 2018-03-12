@@ -44,7 +44,6 @@ public class Main {
 				try {
 					Files.delete(Paths.get("zjonn.ini"));
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 		}
@@ -74,6 +73,7 @@ public class Main {
 			System.out.println("Plik nie istnieje, podaj poprawną scieżkę:");
 			path = sc.nextLine();
 		}
+		path = Paths.get(path).toAbsolutePath().toString();
 		str.add(path);
 
 		System.out.println("Podaj scieżkę do folderu z testami:");
@@ -87,6 +87,7 @@ public class Main {
 			path = testsPath;
 			System.out.println("Domyślna ścieżka ustawiona: " + Paths.get(testsPath).toString());
 		}
+		path = Paths.get(path).toAbsolutePath().toString();
 		str.add(path);
 
 		sc.close();
@@ -132,9 +133,9 @@ public class Main {
 		if (tests == 0)
 			return;
 		if (incorrect == 0) {
-			System.out.format("Liczba testów - %d\nWszystkie odpowiedzi poprawne", tests);
+			System.out.format("Liczba testów - %d\nWszystkie odpowiedzi poprawne\n", tests);
 		} else {
-			System.out.format("Liczba testów - %d\nPoprawne      - %d\nNiepoprawne   - %d", tests, tests - incorrect,
+			System.out.format("Liczba testów - %d\nPoprawne      - %d\nNiepoprawne   - %d\n", tests, tests - incorrect,
 					incorrect);
 		}
 	}
@@ -148,7 +149,7 @@ public class Main {
 				System.out.println("TLE");
 				incorrect++;
 			} catch (ExecutionException e) {
-				System.out.println("ExecutionException");
+				System.out.println("Nie udało się wywołać programu");
 				incorrect++;
 			}
 		}
