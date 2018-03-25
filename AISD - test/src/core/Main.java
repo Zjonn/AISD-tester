@@ -15,13 +15,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 public class Main {
 
 	public String progPath = "prac";
 	public String testsPath = "tests";
+
+	public static boolean timeTest = false;
+	public static final int timeIter = 10;
 
 	public Main(String a[]) {
 		init(a);
@@ -50,6 +52,7 @@ public class Main {
 			case "-t":
 			case "--time":
 				PrintTest.printTime = true;
+				timeTest = true;
 				break;
 			case "-r":
 			case "--reset":
@@ -66,7 +69,8 @@ public class Main {
 				System.out.println("-c  --correct  sprawdzaczka zacznie wypisywać wszystkie testy którym"
 						+ " poddany został program");
 				System.out.println("-r  --reset    pozwala na zmianę ścieżki do programu i testów");
-				System.out.println("-t  --time     wypisuje czas działania testów");
+				System.out.println("-t  --time     wypisuje czas wykonywania testów, jest to śrenia z " + timeIter
+						+ " wykonań tesów (może chwilę zająć)");
 				break;
 			default:
 				System.out.println("Nie znam: " + s);
@@ -136,11 +140,11 @@ public class Main {
 	}
 
 	List<Future<Void>> invokeTests(List<CallableTest> tests) {
-		ExecutorService executor = Executors.newFixedThreadPool(8);
+		ExecutorService executor = Executors.newFixedThreadPool(4);
 		List<Future<Void>> tasks = null;
 
 		try {
-			tasks = executor.invokeAll(tests, 10, TimeUnit.SECONDS);
+			tasks = executor.invokeAll(tests, 100, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			System.out.println("TLE - wina sprawdzaczki");
 		}
@@ -164,10 +168,10 @@ public class Main {
 		for (Future<Void> f : future) {
 			TestResult tRes = tr.get(future.indexOf(f));
 			try {
-				f.get(1, TimeUnit.SECONDS);
+				f.get();
 				if (tRes.isCorrect())
 					incorrect--;
-			} catch (InterruptedException | TimeoutException | ExecutionException e) {
+			} catch (InterruptedException | ExecutionException e) {
 				tRes.isTLE = true;
 			}
 		}
@@ -177,7 +181,7 @@ public class Main {
 				return a0.name.compareToIgnoreCase(a1.name);
 			}
 		});
-		for(TestResult t : tr) {
+		for (TestResult t : tr) {
 			PrintTest.printResult(t);
 		}
 		printSummary(future.size(), incorrect);
