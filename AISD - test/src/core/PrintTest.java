@@ -1,5 +1,7 @@
 package core;
 
+import java.text.DecimalFormat;
+
 public class PrintTest {
 	static boolean printOk = false;
 	static boolean moreInfo = false;
@@ -18,7 +20,7 @@ public class PrintTest {
 
 	static void printCorrect(TestResult t) {
 		if (printTime) {
-			System.out.println("OK: time: " + t.time + "sec \"" + t.name + "\"");
+			System.out.println("OK: time: " + new DecimalFormat("0.###").format(t.time) + "s \"" + t.name + "\"");
 		} else if (printOk)
 			System.out.println("OK: \"" + t.name + "\"");
 	}

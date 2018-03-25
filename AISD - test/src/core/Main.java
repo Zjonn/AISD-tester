@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
@@ -126,33 +125,33 @@ public class Main {
 		return str;
 	}
 
-	List<CallableTest> getTests() {
-		var tests = new ArrayList<CallableTest>();
+	List<RunnableTest> getTests() {
+		var tests = new ArrayList<RunnableTest>();
 
 		try (Stream<Path> paths = Files.walk(Paths.get(testsPath))) {
 			paths.filter(Files::isRegularFile).filter(x -> x.toString().endsWith(".in"))
-					.forEach(x -> tests.add(new CallableTest(x.toString(), progPath)));
+					.forEach(x -> tests.add(new RunnableTest(x.toString(), progPath)));
 		} catch (IOException e) {
 			System.out.println("Nie znalazłem foldreru \"" + testsPath + "\"");
 		}
 		return tests;
 	}
 
-	List<Future<Void>> invokeTests(List<CallableTest> tests) {
-		ExecutorService executor = Executors.newFixedThreadPool(4);
-		List<Future<Void>> tasks = new ArrayList<Future<Void>>();
+	List<Future<Void>> invokeTests(List<RunnableTest> tests) {
+		var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		var tasks = new ArrayList<Future<Void>>();
 
 		for (var c : tests) {
-			tasks.add(executor.submit(c));
+			tasks.add(executor.submit(c, null));
 		}
 
 		executor.shutdown();
 		return tasks;
 	}
 
-	List<TestResult> getResults(List<CallableTest> tests) {
+	List<TestResult> getResults(List<RunnableTest> tests) {
 		var l = new ArrayList<TestResult>();
-		for (CallableTest t : tests) {
+		for (RunnableTest t : tests) {
 			l.add(t.t.tr);
 		}
 		return l;
@@ -165,6 +164,7 @@ public class Main {
 			TestResult tRes = tr.get(i);
 			try {
 				f.get();
+
 				if (tRes.isCorrect())
 					incorrect--;
 			} catch (InterruptedException | ExecutionException e) {

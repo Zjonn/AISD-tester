@@ -2,23 +2,29 @@ package core;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
+import java.lang.management.ManagementFactory;
 
-public class CallableTest implements Callable<Void> {
+public class RunnableTest implements Runnable {
 
 	TestInfo t;
 
-	public CallableTest(String testPath, String progPath) {
+	public RunnableTest(String testPath, String progPath) {
 		t = new TestInfo(testPath, progPath);
 	}
 
 	@Override
-	public Void call() throws Exception {
-		callTest();
-		return null;
+	public void run() {
+		try {
+			runTest();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 	}
 
-	void callTest() throws IOException, InterruptedException {
+	void runTest() throws IOException, InterruptedException {
 		File tmp = File.createTempFile(t.testPath.getFileName().toString(), "tmp");
 		ProcessBuilder pb = new ProcessBuilder(t.progPath.toString());
 		setProcessBuilder(pb, tmp);
@@ -48,15 +54,14 @@ public class CallableTest implements Callable<Void> {
 	private void timeTestInvoke(File tmp, ProcessBuilder pb) throws IOException, InterruptedException {
 		int exitCode = 0;
 
-		long start = System.nanoTime();
+		long time = System.nanoTime();
 
 		for (int i = 0; i < Main.timeIter; i++) {
 			Process proc = pb.start();
 			exitCode = proc.waitFor();
 		}
+		time += ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
 
-		long end = System.nanoTime();
-		t.getResult(tmp, exitCode, (end - start) / Main.timeIter);
+		t.getResult(tmp, exitCode, (System.nanoTime() - time) / Main.timeIter);
 	}
-
 }

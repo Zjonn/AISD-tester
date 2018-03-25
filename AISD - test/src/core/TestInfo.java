@@ -58,7 +58,9 @@ class TestResult {
 	String output;
 
 	double time;
+
 	int exitCode;
+
 	boolean isUpdated = false;
 	boolean isTLE = false;
 
