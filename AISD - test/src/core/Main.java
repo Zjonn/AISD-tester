@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class Main {
@@ -141,17 +140,13 @@ public class Main {
 
 	List<Future<Void>> invokeTests(List<CallableTest> tests) {
 		ExecutorService executor = Executors.newFixedThreadPool(4);
-		List<Future<Void>> tasks = null;
+		List<Future<Void>> tasks = new ArrayList<Future<Void>>();
 
-		try {
-			tasks = executor.invokeAll(tests, 100, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			System.out.println("TLE - wina sprawdzaczki");
+		for (var c : tests) {
+			tasks.add(executor.submit(c));
 		}
 
 		executor.shutdown();
-		while (!executor.isTerminated()) {
-		}
 		return tasks;
 	}
 
@@ -165,8 +160,9 @@ public class Main {
 
 	void printTestsResults(List<Future<Void>> future, List<TestResult> tr) {
 		int incorrect = future.size();
-		for (Future<Void> f : future) {
-			TestResult tRes = tr.get(future.indexOf(f));
+		for (int i = 0; i < future.size(); i++) {
+			Future<Void> f = future.get(i);
+			TestResult tRes = tr.get(i);
 			try {
 				f.get();
 				if (tRes.isCorrect())
@@ -174,6 +170,7 @@ public class Main {
 			} catch (InterruptedException | ExecutionException e) {
 				tRes.isTLE = true;
 			}
+			printProgress((double) (i + 1) / future.size());
 		}
 		Collections.sort(tr, new Comparator<TestResult>() {
 			@Override
@@ -185,6 +182,20 @@ public class Main {
 			PrintTest.printResult(t);
 		}
 		printSummary(future.size(), incorrect);
+	}
+
+	void printProgress(double percent) {
+		System.out.print("[");
+		for (int i = 1; i <= 80; i++) {
+			if (i <= percent * 80)
+				System.out.print("#");
+			else
+				System.out.print(" ");
+		}
+		if (percent >= 1)
+			System.out.println("] Done");
+		else
+			System.out.format("] %d%% \r", (int) (percent * 100));
 	}
 
 	void printSummary(int tests, int incorrect) {
