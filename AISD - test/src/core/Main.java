@@ -68,8 +68,8 @@ public class Main {
 				System.out.println("-c  --correct  sprawdzaczka zacznie wypisywać wszystkie testy którym"
 						+ " poddany został program");
 				System.out.println("-r  --reset    pozwala na zmianę ścieżki do programu i testów");
-				System.out.println("-t  --time     wypisuje czas wykonywania testów, jest to śrenia z " + timeIter
-						+ " wykonań tesów (może chwilę zająć)");
+				System.out.println("-t  --time     wypisuje czas wykonywania każdego z testów,wynik śrenią z " + timeIter
+						+ " wywołań (może chwilę zająć)");
 				break;
 			default:
 				System.out.println("Nie znam: " + s);
