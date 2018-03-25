@@ -18,7 +18,10 @@ Porównuję wynik zwrócony przez program z oczekiwaną odpowiedzią.
 - `-r` pozwala na zmianę ścieżki do programu i testów
 - `-m` testy dla których program zawiódł będą wypisywane wraz z wartością zwróconą przez program oraz wartością oczekiwaną 
 - `-c` sprawdzaczka zacznie wypisywać wszystkie testy którym poddany został program
+- `-t` czas wykonywania testu
+- `-h` pomoc
+
 
 ### Wymagania
-Zainstalowany program java w wesji 9.<br>
+Zainstalowany program java w wesji 10.<br>
 Wpisz `java -version` aby sprawdzić jaką wersję posiadasz.

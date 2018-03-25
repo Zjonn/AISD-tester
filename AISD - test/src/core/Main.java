@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
@@ -13,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 public class Main {
@@ -22,8 +25,10 @@ public class Main {
 
 	public Main(String a[]) {
 		init(a);
-		List<CallableTest> tests = getTests();
-		invokeTests(tests);
+		var tests = getTests();
+		var results = invokeTests(tests);
+		var testResInfo = getResults(tests);
+		printTestsResults(results, testResInfo);
 	}
 
 	void init(String a[]) {
@@ -35,16 +40,36 @@ public class Main {
 		for (String s : a) {
 			switch (s) {
 			case "-m":
+			case "--more":
 				PrintTest.moreInfo = true;
 				break;
 			case "-c":
+			case "--correct":
 				PrintTest.printOk = true;
 				break;
+			case "-t":
+			case "--time":
+				PrintTest.printTime = true;
+				break;
 			case "-r":
+			case "--reset":
 				try {
 					Files.delete(Paths.get("zjonn.ini"));
 				} catch (IOException e) {
 				}
+				break;
+			case "-h":
+			case "--help":
+				System.out.println("Dostępne argumenty:");
+				System.out.println("-m  --more     testy dla których program zawiódł będą wypisywane wraz z"
+						+ " wartością zwróconą przez program oraz wartością oczekiwaną");
+				System.out.println("-c  --correct  sprawdzaczka zacznie wypisywać wszystkie testy którym"
+						+ " poddany został program");
+				System.out.println("-r  --reset    pozwala na zmianę ścieżki do programu i testów");
+				System.out.println("-t  --time     wypisuje czas działania testów");
+				break;
+			default:
+				System.out.println("Nie znam: " + s);
 			}
 		}
 	}
@@ -99,7 +124,7 @@ public class Main {
 	}
 
 	List<CallableTest> getTests() {
-		ArrayList<CallableTest> tests = new ArrayList<CallableTest>();
+		var tests = new ArrayList<CallableTest>();
 
 		try (Stream<Path> paths = Files.walk(Paths.get(testsPath))) {
 			paths.filter(Files::isRegularFile).filter(x -> x.toString().endsWith(".in"))
@@ -110,26 +135,55 @@ public class Main {
 		return tests;
 	}
 
-	void invokeTests(List<CallableTest> tests) {
-		ExecutorService executor = Executors.newFixedThreadPool(5);
-		List<Future<Integer>> tasks = null;
+	List<Future<Void>> invokeTests(List<CallableTest> tests) {
+		ExecutorService executor = Executors.newFixedThreadPool(8);
+		List<Future<Void>> tasks = null;
 
 		try {
-			tasks = executor.invokeAll(tests, 5, TimeUnit.SECONDS);
-		} catch (InterruptedException e1) {
+			tasks = executor.invokeAll(tests, 10, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
 			System.out.println("TLE - wina sprawdzaczki");
 		}
-
-		int incorrectTests;
-		incorrectTests = countIncorrectTests(tasks);
-		printResult(tests.size(), incorrectTests);
 
 		executor.shutdown();
 		while (!executor.isTerminated()) {
 		}
+		return tasks;
 	}
 
-	void printResult(int tests, int incorrect) {
+	List<TestResult> getResults(List<CallableTest> tests) {
+		var l = new ArrayList<TestResult>();
+		for (CallableTest t : tests) {
+			l.add(t.t.tr);
+		}
+		return l;
+	}
+
+	void printTestsResults(List<Future<Void>> future, List<TestResult> tr) {
+		int incorrect = future.size();
+		for (Future<Void> f : future) {
+			TestResult tRes = tr.get(future.indexOf(f));
+			try {
+				f.get(1, TimeUnit.SECONDS);
+				if (tRes.isCorrect())
+					incorrect--;
+			} catch (InterruptedException | TimeoutException | ExecutionException e) {
+				tRes.isTLE = true;
+			}
+		}
+		Collections.sort(tr, new Comparator<TestResult>() {
+			@Override
+			public int compare(TestResult a0, TestResult a1) {
+				return a0.name.compareToIgnoreCase(a1.name);
+			}
+		});
+		for(TestResult t : tr) {
+			PrintTest.printResult(t);
+		}
+		printSummary(future.size(), incorrect);
+	}
+
+	void printSummary(int tests, int incorrect) {
 		if (tests == 0)
 			return;
 		if (incorrect == 0) {
@@ -138,22 +192,6 @@ public class Main {
 			System.out.format("Liczba testów - %d\nPoprawne      - %d\nNiepoprawne   - %d\n", tests, tests - incorrect,
 					incorrect);
 		}
-	}
-
-	int countIncorrectTests(List<Future<Integer>> tasks) {
-		int incorrect = 0;
-		for (Future<Integer> f : tasks) {
-			try {
-				incorrect += f.get();
-			} catch (InterruptedException e) {
-				System.out.println("TLE");
-				incorrect++;
-			} catch (ExecutionException e) {
-				System.out.println("Nie udało się wywołać programu");
-				incorrect++;
-			}
-		}
-		return incorrect;
 	}
 
 	public static void main(String a[]) {
